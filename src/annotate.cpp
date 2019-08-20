@@ -1,15 +1,18 @@
-#include <fstream>
-#include <map>
-#include <limits>
-
 #include <boost/filesystem.hpp>
 #include <boost/program_options.hpp>
 
 #include <opencv2/opencv.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
-#define WHITE cv::Scalar(255,255,255)
-#define BLACK cv::Scalar(0,0,0)
+#include <algorithm>
+#include <limits>
+#include <fstream>
+#include <map>
+#include <string>
+#include <vector>
+
+#define WHITE cv::Scalar(255, 255, 255)
+#define BLACK cv::Scalar(0, 0, 0)
 
 namespace po = boost::program_options;
 namespace fs = boost::filesystem;
@@ -37,8 +40,8 @@ cv::Rect zoomRect;
  */
 cv::Point
 global_pos(cv::Mat* imageGT) {
-    float zoomWidthFactor = zoomRect.width / float(imageGT->cols);
-    float zoomHeightFactor = zoomRect.height / float(imageGT->rows);
+    float zoomWidthFactor = zoomRect.width / static_cast<float>(imageGT->cols);
+    float zoomHeightFactor = zoomRect.height / static_cast<float>(imageGT->rows);
     return cv::Point(zoomRect.x + (mousePosition.x * zoomWidthFactor), zoomRect.y + (mousePosition.y * zoomHeightFactor));
 }
 
@@ -56,22 +59,22 @@ zoom(double factor, cv::Mat* image) {
     cv::Point zoomPosition = global_pos(image);
 
     // these raios have to stay the same so that the mouse cursor stays on the same position
-    double width_ratio = mousePosition.x / double(image->cols);
-    double height_ratio = mousePosition.y / double(image->rows);
+    double width_ratio = mousePosition.x / static_cast<double>(image->cols);
+    double height_ratio = mousePosition.y / static_cast<double>(image->rows);
 
     // scale width and height according the provided factor
     // make sure that the zooming rectangle is not larger than the image zoomed into
-    zoomRect.width = std::min(image->cols, int(zoomRect.width * factor));
-    zoomRect.height = std::min(image->rows, int(zoomRect.height * factor));
+    zoomRect.width = std::min(image->cols, static_cast<int>(zoomRect.width * factor));
+    zoomRect.height = std::min(image->rows, static_cast<int>(zoomRect.height * factor));
 
     // change x position in a way that makes the mouse cursor stay on the same position
-    zoomRect.x = std::max(0, int(zoomPosition.x - (width_ratio * zoomRect.width)));
+    zoomRect.x = std::max(0, static_cast<int>(zoomPosition.x - (width_ratio * zoomRect.width)));
     // make sure that the rectangle does not focus parts outside the image
     // this can only happen on zooming out and can lead to 'jumping'
     zoomRect.x = std::min(zoomRect.x, image->cols - zoomRect.width);
 
     // change y position in a way that makes the mouse cursor stay on the same position
-    zoomRect.y = std::max(0, int(zoomPosition.y - (height_ratio * zoomRect.height)));
+    zoomRect.y = std::max(0, static_cast<int>(zoomPosition.y - (height_ratio * zoomRect.height)));
     // make sure that the rectangle does not focus parts outside the image
     // this can only happen on zooming out and can lead to 'jumping'
     zoomRect.y = std::min(zoomRect.y, image->rows - zoomRect.height);
@@ -94,7 +97,7 @@ void mark(cv::Mat *imageGT, const bool asGT) {
 void onMouse(int event, int x, int y, int flags, void* userdata) {
     // save current mouse position
     // skip saving on mouse wheel events because it somehow results in negative values
-    if(event != cv::EVENT_MOUSEWHEEL && event != cv::EVENT_MOUSEHWHEEL) {
+    if (event != cv::EVENT_MOUSEWHEEL && event != cv::EVENT_MOUSEHWHEEL) {
         mousePosition = cv::Point(x, y);
     }
 
@@ -181,7 +184,7 @@ std::vector<fs::path> get_files_from_dir(std::string dir) {
  * on the bottom right side.
  */
 cv::Mat
-create_image_to_show(cv::Mat* image, cv::Mat* imageGT, std::string image_file="") {
+create_image_to_show(cv::Mat* image, cv::Mat* imageGT, std::string image_file = "") {
     // create image to show with enough space to display blend, GT and info
     cv::Mat image_to_show(image->rows, image->cols + (0.5 * image->cols), image->type());
 
@@ -202,7 +205,7 @@ create_image_to_show(cv::Mat* image, cv::Mat* imageGT, std::string image_file=""
     cv::resize(blend(zoomRect), zoomed, blend.size());
 
     // draw marker
-    double zoomFactor = double(imageGT->cols) / double(zoomRect.width);
+    double zoomFactor = imageGT->cols / static_cast<double>(zoomRect.width);
     cv::Point topLeft(mousePosition.x - (markerSize * zoomFactor) - 1, mousePosition.y - (markerSize * zoomFactor) - 1);
     cv::Point bottomRight(topLeft.x + (markerSize * zoomFactor) + 1, topLeft.y + (markerSize * zoomFactor) + 1);
     cv::rectangle(image_to_show, topLeft, bottomRight, BLACK, 1);
@@ -214,7 +217,7 @@ create_image_to_show(cv::Mat* image, cv::Mat* imageGT, std::string image_file=""
  * Display a provided image and its GT for a user to interactively annotate it.
  */
 int
-annotate_image(cv::Mat* image, cv::Mat* imageGT, std::string image_file="") {
+annotate_image(cv::Mat* image, cv::Mat* imageGT, std::string image_file = "") {
     // create resizable window
     cv::namedWindow("AnnotationTool", cv::WINDOW_NORMAL | cv::WINDOW_KEEPRATIO | cv::WINDOW_GUI_EXPANDED);
     // set initial window size
@@ -238,17 +241,17 @@ annotate_image(cv::Mat* image, cv::Mat* imageGT, std::string image_file="") {
         int key = cv::waitKey(1000 / 60);
 
         // handle key events
-        switch(key) {
+        switch (key) {
             case 'n':
             case '\n':
                 // n, enter -> save and go to next image
                 return 1;
             case 'p':
-            case 8: // BACKSPACE
+            case 8:  // BACKSPACE
                 // p, backspace -> save and go to previous image
                 return -1;
             case 'q':
-            case 27: // ESC
+            case 27:  // ESC
                 // esc or q -> quit without doing anything
                 quit = true;
                 return 0;
@@ -294,19 +297,19 @@ annotate_image(cv::Mat* image, cv::Mat* imageGT, std::string image_file="") {
             // the arrow keys seem to change the trackbars in openCV per default
             case 'a':
                 // move zooming rectangle left relative to its width
-                zoomRect.x = std::max(0, zoomRect.x - int(0.2 * zoomRect.width));
+                zoomRect.x = std::max(0, zoomRect.x - static_cast<int>(0.2 * zoomRect.width));
                 break;
             case 'w':
                 // move zooming rectangle up left relative to its height
-                zoomRect.y = std::max(0, zoomRect.y - int(0.2 * zoomRect.height));
+                zoomRect.y = std::max(0, zoomRect.y - static_cast<int>(0.2 * zoomRect.height));
                 break;
             case 'd':
                 // move zooming rectangle right relative to its width
-                zoomRect.x = std::min(imageGT->cols - zoomRect.width, zoomRect.x + int(0.2 * zoomRect.width));
+                zoomRect.x = std::min(imageGT->cols - zoomRect.width, zoomRect.x + static_cast<int>(0.2 * zoomRect.width));
                 break;
             case 's':
                 // move zooming rectangle down relative to its height
-                zoomRect.y = std::min(imageGT->rows - zoomRect.height, zoomRect.y + int(0.2 * zoomRect.height));
+                zoomRect.y = std::min(imageGT->rows - zoomRect.height, zoomRect.y + static_cast<int>(0.2 * zoomRect.height));
                 break;
             case 'z':
                 displayDefectInfo = !displayDefectInfo;
@@ -427,7 +430,7 @@ main(int argc, char** argv) {
 
         labelMap[filename].push_back(cv::Rect(xMin, yMin, xMax - xMin, yMax - yMin));
     }
-    for (auto& entry: labelMap) {
+    for (auto& entry : labelMap) {
         for (cv::Rect& rect : entry.second) {
             rect -= anchorPointMap[entry.first];
         }
@@ -480,7 +483,7 @@ main(int argc, char** argv) {
     // make sure that output directory exists and is a directory
     // if it does not yet exist create it
     if (fs::exists(output_dir)) {
-        if(!fs::is_directory(output_dir)) {
+        if (!fs::is_directory(output_dir)) {
             std::cout << "Error! Output directory[" << output_dir << "] is not a directory!" << std::endl;
             return 1;
         }
