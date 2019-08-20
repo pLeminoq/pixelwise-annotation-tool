@@ -52,7 +52,7 @@ global_pos(cv::Mat* imageGT) {
  */
 void
 zoom(double factor, cv::Mat* image) {
-    // store the current position of the cursor without zooming 
+    // store the current position of the cursor without zooming
     cv::Point zoomPosition = global_pos(image);
 
     // these raios have to stay the same so that the mouse cursor stays on the same position
@@ -60,7 +60,7 @@ zoom(double factor, cv::Mat* image) {
     double height_ratio = mousePosition.y / double(image->rows);
 
     // scale width and height according the provided factor
-    // make sure that the zooming rectangle is not larger than the image zoomed into 
+    // make sure that the zooming rectangle is not larger than the image zoomed into
     zoomRect.width = std::min(image->cols, int(zoomRect.width * factor));
     zoomRect.height = std::min(image->rows, int(zoomRect.height * factor));
 
@@ -130,7 +130,7 @@ void onMouse(int event, int x, int y, int flags, void* userdata) {
         } else {
             // modify marker size without modifier keys pressed
             if (inwards) {
-                markerSize = std::min(markerSize + 1, 25);
+                markerSize = std::min(markerSize + 1, 50);
             } else {
                 markerSize = std::max(markerSize - 1, 1);
             }
@@ -184,10 +184,10 @@ cv::Mat
 create_image_to_show(cv::Mat* image, cv::Mat* imageGT, std::string image_file="") {
     // create image to show with enough space to display blend, GT and info
     cv::Mat image_to_show(image->rows, image->cols + (0.5 * image->cols), image->type());
-    
+
     // create blended image
     cv::Mat blend;
-    // add weighted GT to image to create blend 
+    // add weighted GT to image to create blend
     cv::addWeighted(*image, 1.0, *imageGT, overlay / 100.0, 0.0, blend);
 
     if (displayDefectInfo && labelMap.find(imageName) != labelMap.end()) {
@@ -217,7 +217,7 @@ int
 annotate_image(cv::Mat* image, cv::Mat* imageGT, std::string image_file="") {
     // create resizable window
     cv::namedWindow("AnnotationTool", cv::WINDOW_NORMAL | cv::WINDOW_KEEPRATIO | cv::WINDOW_GUI_EXPANDED);
-    // set initial window size 
+    // set initial window size
     cv::resizeWindow("AnnotationTool", 1600, 900);
 
     // add callback to handle mouse events
@@ -270,7 +270,7 @@ annotate_image(cv::Mat* image, cv::Mat* imageGT, std::string image_file="") {
                 if (mousePosition.x > imageGT->cols || mousePosition.y > imageGT->rows) {
                     break;
                 }
-                
+
                 // zoom in
                 zoom(0.8, imageGT);
                 break;
@@ -279,7 +279,7 @@ annotate_image(cv::Mat* image, cv::Mat* imageGT, std::string image_file="") {
                 if (mousePosition.x > imageGT->cols || mousePosition.y > imageGT->rows) {
                     break;
                 }
-                
+
                 // zoom out
                 zoom(1.0 / 0.8, imageGT);
                 break;
@@ -338,7 +338,7 @@ annotate(std::string image_dir, std::string output_dir, int start_index, std::st
     std::ifstream annotationFile(annotatedFileName);
     for (std::string line; std::getline(annotationFile, line); ) {
        alreadyAnnotatedFiles.push_back(line);
-    } 
+    }
 
     // save index and if it should be skipped to a certain file
     int i = start_index;
@@ -379,10 +379,10 @@ annotate(std::string image_dir, std::string output_dir, int start_index, std::st
             // create black GT
             imageGT = cv::Mat(image.size(), CV_8UC3, BLACK);
         }
-          
+
         // display GUI to annotate, returns when jumping to next/previous image is required
         i += annotate_image(&image, &imageGT, image_file.filename().string());
-        
+
         // quit if value was set
         if (quit) {
             return;
@@ -451,8 +451,8 @@ main(int argc, char** argv) {
     // mark image dir as a positional option
     po::positional_options_description p;
     p.add("image_dir", 1);
-   
-    // pare options 
+
+    // pare options
     po::variables_map vm;
     po::store(po::command_line_parser(argc, argv).options(desc).positional(p).run(), vm);
     po::notify(vm);
@@ -489,8 +489,7 @@ main(int argc, char** argv) {
         fs::create_directory(output_dir);
     }
 
-    // start annotation   
+    // start annotation
     annotate(image_dir, output_dir, start_index, skipTo);
     return 0;
 }
-
